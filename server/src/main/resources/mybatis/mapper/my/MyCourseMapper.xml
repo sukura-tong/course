@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.swust.server.mapper.my.MyCourseMapper">
+    <update id="updateTime">
+        update course c set `time` = (select sum(`time`) from `section` where course_id = #{courseId})
+        where c.id = #{courseId}
+    </update>
+
+    <update id="updateSort" parameterType="com.swust.server.dto.SortDto">
+        update course set `sort`= #{newSort} where id = #{id}
+    </update>
+
+    <update id="moveSortsBackward" parameterType="com.swust.server.dto.SortDto">
+        <![CDATA[
+        update course set `sort`= (`sort`+1) where `sort` >= #{newSort} and `sort` <= #{oldSort} and id != #{id}
+        ]]>
+    </update>
+
+    <update id="moveSortsForward" parameterType="com.swust.server.dto.SortDto">
+        <![CDATA[
+        update course set `sort`= (`sort`-1) where `sort` <= #{newSort} and `sort` >= #{oldSort} and id != #{id}
+        ]]>
+    </update>
+
+    <select id="selectCourseByChoose" parameterType="com.swust.server.dto.CoursePageDto"
+            resultType="com.swust.server.dto.CourseDto">
+        select c.id, c.name, c.summary, time, price, image,
+               level, charge, status, enroll, sort, create_at as createdAt,
+               update_at as updatedAt, teacher_id as teacherId
+        from course c
+        <if test="coursePageDto.categoryId != null and coursePageDto.categoryId != ''">
+            ,course_category cc
+        </if>
+        where 1 = 1
+        <if test="coursePageDto.categoryId != null and coursePageDto.categoryId != ''">
+            and c.id = cc.course_id
+            and cc.category_id = #{coursePageDto.categoryId}
+        </if>
+        <if test="coursePageDto.status != null and coursePageDto.status != ''">
+            and c.status = #{coursePageDto.status}
+        </if>
+        order by c.sort asc
+    </select>
+</mapper>
